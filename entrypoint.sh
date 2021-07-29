@@ -12,6 +12,7 @@ cd /tmp/git
 echo Test > testfile
 git add -A
 git diff --cached
+TAG=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/${INPUT_TAG_NAME_SKIP}//")
 git commit -m "Test commit ${TAG}"
 git push
 git log -2
