@@ -13,11 +13,13 @@ cd /tmp/git
 TAG=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/${INPUT_TAG_NAME_SKIP}//")
 DOCKER_IMAGE=$(printf "%s/%s" $DOCKER_REPOSITORY_NAME $DOCKER_IMAGE_NAME)
 echo DOCKER_IMAGE=$DOCKER_IMAGE
+DOCKER_IMAGE_SLASH=$(echo ${DOCKER_IMAGE} | sed 's#/#\\/#g')
+echo DOCKER_IMAGE_SLASH=${DOCKER_IMAGE_SLASH}
 #
-for i in $(grep -rn $DOCKER_IMAGE: ./ | awk -F: '{print $1}')
+for YAML_FILE in $(grep -rn $DOCKER_IMAGE: ./ | awk -F: '{print $1}')
 do
   echo Processing $i
-  sed -E "s/image: .+$/image: ${DOCKER_IMAGE}:${TAG}/" $i
+  sed -E "s/image: .+$/image: ${DOCKER_IMAGE_SLASH}:${TAG}/" ${YAML_FILE} # > ${YAML_FILE}.tmp
   #mv $i.tmp $i
 done
 #
