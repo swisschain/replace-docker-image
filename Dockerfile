@@ -1,6 +1,4 @@
-FROM alpine:3.12
-
-RUN apk add --no-cache git
+FROM gcr.io/cloud-builders/kubectl
 
 COPY entrypoint.sh /entrypoint.sh
 
