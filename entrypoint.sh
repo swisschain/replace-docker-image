@@ -17,7 +17,7 @@ echo DOCKER_IMAGE=$DOCKER_IMAGE
 for i in $(grep -rn $DOCKER_IMAGE: ./ | awk -F: '{print $1}')
 do
   echo Processing $i
-  sed -E "s/${DOCKER_IMAGE}:.+$/${DOCKER_IMAGE}:${TAG}/" $i 
+  sed -E "s/image: .+$/image: ${DOCKER_IMAGE}:${TAG}/" $i
   #mv $i.tmp $i
 done
 #
