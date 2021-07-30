@@ -19,7 +19,8 @@ echo DOCKER_IMAGE_SLASH=${DOCKER_IMAGE_SLASH}
 for YAML_FILE in $(grep -rn $DOCKER_IMAGE: ./ | awk -F: '{print $1}')
 do
   echo Processing $YAML_FILE
-  sed -E "s/image: .+$/image: ${DOCKER_IMAGE_SLASH}:${TAG}/" ${YAML_FILE} # > ${YAML_FILE}.tmp
+  #sed -E "s/image: .+$/image: ${DOCKER_IMAGE_SLASH}:${TAG}/" ${YAML_FILE} # > ${YAML_FILE}.tmp
+  sed -E "s/${DOCKER_IMAGE_SLASH}:.+$/${DOCKER_IMAGE_SLASH}:${TAG}/" ${YAML_FILE} # > ${YAML_FILE}.tmp
   #mv $i.tmp $i
 done
 #
