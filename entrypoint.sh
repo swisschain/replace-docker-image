@@ -7,7 +7,7 @@ echo "Cloning git repository"
 git config --global user.name "${GIT_USER}"
 git config --global user.email "${GIT_EMAIL}"
 mkdir /tmp/git
-git clone --single-branch --branch "$GIT_BRANCH" "https://x-access-token:$GIT_USER_API_TOKEN@github.com/$GIT_REPOSITORY_OWNER/$GIT_REPOSITORY_NAME.git" /tmp/git
+git clone --single-branch --branch "$GIT_BRANCH" "https://x-access-token:$GIT_USER_API_TOKEN@github.com/$GIT_INFRASTRUCTURE_REPOSITORY_OWNER/$GIT_INFRASTRUCTURE_REPOSITORY_NAME.git" /tmp/git
 cd /tmp/git
 #
 TAG=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/${INPUT_TAG_NAME_SKIP}//")
@@ -25,6 +25,6 @@ done
 #
 git add -A
 git diff --cached
-git commit -m "${{ github.event.repository.name }} ${TAG}"
+git commit -m "$GIT_REPOSITORY_NAME ${TAG}"
 git push
 git log -2
