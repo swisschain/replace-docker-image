@@ -1,6 +1,6 @@
 #!/bin/sh -l
 
-#set -e  # stops execution
+set -e  # stops execution
 set -u  # undefined variable
 
 echo "Set git globals"
