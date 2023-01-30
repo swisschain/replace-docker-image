@@ -27,6 +27,10 @@ clone_commit_push() {
   TAG=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/${INPUT_TAG_NAME_SKIP}//")
   echo "Set docker image"
   echo TAG=${TAG}
+  if echo ${TAG} | grep refs;then
+    echo Get TAG fail - EXIT...
+    exit 1
+  fi
   DOCKER_IMAGE=$(printf "%s/%s" $DOCKER_REPOSITORY_NAME $DOCKER_IMAGE_NAME)
   echo DOCKER_IMAGE=$DOCKER_IMAGE
   echo "Set docker image with slash"
