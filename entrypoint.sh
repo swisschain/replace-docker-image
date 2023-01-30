@@ -23,8 +23,10 @@ clone_commit_push() {
   cd /tmp/git
   #
   echo "Set tag"
+  echo INPUT_TAG_NAME_SKIP=${INPUT_TAG_NAME_SKIP}
   TAG=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/${INPUT_TAG_NAME_SKIP}//")
   echo "Set docker image"
+  echo TAG=${TAG}
   DOCKER_IMAGE=$(printf "%s/%s" $DOCKER_REPOSITORY_NAME $DOCKER_IMAGE_NAME)
   echo DOCKER_IMAGE=$DOCKER_IMAGE
   echo "Set docker image with slash"
