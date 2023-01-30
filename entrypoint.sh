@@ -35,9 +35,7 @@ clone_commit_push() {
   for YAML_FILE in $(grep -rn $DOCKER_IMAGE: ./ | awk -F: '{print $1}')
   do
     echo Processing $YAML_FILE
-    sed -E "s/${DOCKER_IMAGE_SLASH}:.+$/${DOCKER_IMAGE_SLASH}:${TAG}/" ${YAML_FILE} > ${YAML_FILE}.tmp
-    echo "Rename temp file" 
-    mv ${YAML_FILE}.tmp ${YAML_FILE}
+    sed -i "s/${DOCKER_IMAGE_SLASH}:.*/${DOCKER_IMAGE_SLASH}:${TAG}/" ${YAML_FILE}
   done
   #
   echo "Add changed file to git"
