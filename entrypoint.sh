@@ -62,7 +62,10 @@ clone_commit_push() {
   git log -2
   ) > /tmp/clone_commit_push.log 2>&1
 }
-clone_commit_push
+if ! clone_commit_push;then
+  echo EXIT because function error
+  exit 1
+fi
 exit_code=$(cat /tmp/exit_status)
 if [ "$exit_code" -eq 1 ]; then
   echo "Print Log F1"
