@@ -17,8 +17,12 @@ clone_commit_push() {
     echo Create Temp Directory
     mkdir /tmp/git
   fi
-  echo "Cloning git repository"
+  echo "Cloning git repository (branch=$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH, owner=$GIT_INFRASTRUCTURE_REPOSITORY_OWNER, name=$GIT_INFRASTRUCTURE_REPOSITORY_NAME)"
   git clone --single-branch --branch "$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH" "https://x-access-token:$GIT_USER_API_TOKEN@github.com/$GIT_INFRASTRUCTURE_REPOSITORY_OWNER/$GIT_INFRASTRUCTURE_REPOSITORY_NAME.git" /tmp/git
+  if $?;then
+    echo Git clone fail - EXIT...
+    exit 1
+  fi
   echo "Go to git repository dir"
   cd /tmp/git
   #
@@ -50,8 +54,8 @@ clone_commit_push() {
   git diff --cached
   echo "Commit to git"
   git commit -m "$GIT_REPOSITORY_NAME ${TAG}"
-  echo Sleep 30
-  sleep 60
+  #echo Sleep 60
+  #sleep 60
   echo "Push to git"
   git push
   echo $? > /tmp/exit_status
