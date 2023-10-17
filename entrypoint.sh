@@ -63,25 +63,27 @@ clone_commit_push() {
   ) > /tmp/clone_commit_push.log 2>&1
 }
 if ! clone_commit_push;then
-  echo EXIT because function error
+  echo "Print Log F0"
+  cat /tmp/clone_commit_push.log
+  echo "Update-Not-Success"
   exit 1
 fi
 exit_code=$(cat /tmp/exit_status)
 if [ "$exit_code" -eq 1 ]; then
   echo "Print Log F1"
   cat /tmp/clone_commit_push.log
-  echo "Push-Not-Success try again"
+  echo "Update-Not-Success try again"
   clone_commit_push
   exit_code_2=$(cat /tmp/exit_status)
   if [ "$exit_code_2" -eq 1 ]; then
     echo "Print Log F2"
     cat /tmp/clone_commit_push.log
-    echo "Push-Not-Success"
+    echo "Update-Not-Success"
     exit 1
   fi
 else
   echo "Print Log S1"
   cat /tmp/clone_commit_push.log
-  echo "Push-Success"
+  echo "Success-Update"
   exit 0
 fi
