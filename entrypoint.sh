@@ -25,7 +25,7 @@ clone_commit_push() {
   echo "Go to git repository dir"
   cd /tmp/git
   
-  if [ -z {$CREATE_PR+x} ];then
+  if [ -z "$CREATE_PR" ];then
     CREATE_PR=false
   fi
   
