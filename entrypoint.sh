@@ -43,7 +43,7 @@ clone_commit_push() {
   echo "Set docker image"
   echo TAG=${TAG}
   if echo ${TAG} | grep refs;then
-    echo "Get TAG faild"
+    echo "Get TAG failed"
     exit 1
   fi
   DOCKER_IMAGE=$(printf "%s/%s" $DOCKER_REPOSITORY_NAME $DOCKER_IMAGE_NAME)
