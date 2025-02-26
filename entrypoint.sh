@@ -24,6 +24,13 @@ clone_commit_push() {
   fi
   echo "Go to git repository dir"
   cd /tmp/git
+  if [ $CREATE_PR = true ];then
+    HEAD_GIT_BRANCH=$(printf "%s-v%s" $DOCKER_IMAGE_NAME $TAG)
+    echo "Switching branch to $HEAD_GIT_BRANCH"
+    git checkout -b $HEAD_GIT_BRANCH
+  else
+    HEAD_GIT_BRANCH=$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH
+  fi
   #
   echo "Set tag"
   echo INPUT_TAG_NAME_SKIP=${INPUT_TAG_NAME_SKIP}
@@ -56,10 +63,31 @@ clone_commit_push() {
   #echo Sleep 60
   #sleep 60
   echo "Push to git"
-  git push
+  git push --set-upstream origin $HEAD_GIT_BRANCH
   echo $? > /tmp/exit_status
   echo "Changes log"
   git log -2
+  #
+  if [ $CREATE_PR = true ];then
+    echo "Creating PR..."
+    PR_TITLE=$(printf "%s %s" $DOCKER_IMAGE_NAME $TAG)
+    PR_BODY=$(printf "%s %s update" $DOCKER_IMAGE_NAME $TAG)
+    PR_URL="https://api.github.com/repos/${GIT_INFRASTRUCTURE_REPOSITORY_OWNER}/${GIT_INFRASTRUCTURE_REPOSITORY_NAME}/pulls"
+    PR_DATA='{"title":"${PR_TITLE}","body":"${PR_BODY}","head":"${HEAD_GIT_BRANCH}","base":"${GIT_INFRASTRUCTURE_REPOSITORY_BRANCH}"}'
+    
+    echo "PR title: $PR_TITLE"
+    echo "PR body: $PR_BODY"
+    echo "PR URL: $PR_URL"
+    echo "PR data: $PR_DATA"
+    
+    curl -L \
+        -X POST \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GIT_USER_API_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        $PR_URL \
+        -d $PR_DATA
+  fi
   ) > /tmp/clone_commit_push.log 2>&1
 }
 if ! clone_commit_push;then
