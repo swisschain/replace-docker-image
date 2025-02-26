@@ -19,11 +19,16 @@ clone_commit_push() {
   fi
   echo "Cloning git repository (branch=$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH, owner=$GIT_INFRASTRUCTURE_REPOSITORY_OWNER, name=$GIT_INFRASTRUCTURE_REPOSITORY_NAME)"
   if ! git clone --single-branch --branch "$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH" "https://x-access-token:$GIT_USER_API_TOKEN@github.com/$GIT_INFRASTRUCTURE_REPOSITORY_OWNER/$GIT_INFRASTRUCTURE_REPOSITORY_NAME.git" /tmp/git;then
-    echo Git clone fail - EXIT...
+    echo "Git clone failed"
     exit 1
   fi
   echo "Go to git repository dir"
   cd /tmp/git
+  
+  if [ -z "$CREATE_PR" ]; then
+    CREATE_PR = false
+  fi  
+  
   if [ $CREATE_PR = true ];then
     HEAD_GIT_BRANCH=$(printf "%s-v%s" $DOCKER_IMAGE_NAME $TAG)
     echo "Switching branch to $HEAD_GIT_BRANCH"
@@ -38,7 +43,7 @@ clone_commit_push() {
   echo "Set docker image"
   echo TAG=${TAG}
   if echo ${TAG} | grep refs;then
-    echo Get TAG fail - EXIT...
+    echo "Get TAG faild"
     exit 1
   fi
   DOCKER_IMAGE=$(printf "%s/%s" $DOCKER_REPOSITORY_NAME $DOCKER_IMAGE_NAME)
@@ -63,7 +68,10 @@ clone_commit_push() {
   #echo Sleep 60
   #sleep 60
   echo "Push to git"
-  git push --set-upstream origin $HEAD_GIT_BRANCH
+  if ! git push --set-upstream origin $HEAD_GIT_BRANCH;then
+    echo "Git push failed"
+    exit 1
+  fi
   echo $? > /tmp/exit_status
   echo "Changes log"
   git log -2
@@ -80,13 +88,16 @@ clone_commit_push() {
     echo "PR URL: $PR_URL"
     echo "PR data: $PR_DATA"
     
-    curl -L \
+    if ! curl -L \
         -X POST \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer $GIT_USER_API_TOKEN" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         $PR_URL \
-        -d $PR_DATA
+        -d $PR_DATA;then
+      echo "PR creation failed"
+      exit 1
+    fi
   fi
   ) > /tmp/clone_commit_push.log 2>&1
 }
