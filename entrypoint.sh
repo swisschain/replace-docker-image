@@ -25,9 +25,9 @@ clone_commit_push() {
   echo "Go to git repository dir"
   cd /tmp/git
   
-  if [ -z "$CREATE_PR" ]; then
-    CREATE_PR = false
-  fi  
+  if [ -z {$CREATE_PR+x} ];then
+    CREATE_PR=false
+  fi
   
   if [ $CREATE_PR = true ];then
     HEAD_GIT_BRANCH=$(printf "%s-v%s" $DOCKER_IMAGE_NAME $TAG)
