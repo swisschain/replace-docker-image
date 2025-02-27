@@ -29,11 +29,7 @@ clone_commit_push() {
   echo "Go to git repository dir"
   cd /tmp/git
   
-  if [[ -z ${#CREATE_PR} == 0 ]];then
-    CREATE_PR=false
-  fi
-  
-  if [ $CREATE_PR == true ];then
+  if [ "$CREATE_PR" = "true" ];then
     HEAD_GIT_BRANCH=$(printf "%s-v%s" $DOCKER_IMAGE_NAME $TAG)
     echo "Switching branch to $HEAD_GIT_BRANCH"
     git checkout -b $HEAD_GIT_BRANCH
@@ -80,7 +76,7 @@ clone_commit_push() {
   echo "Changes log"
   git log -2
   #
-  if [ $CREATE_PR == true ];then
+  if [ "$CREATE_PR" = "true" ];then
     echo "Creating PR..."
     PR_TITLE=$(printf "%s %s" $DOCKER_IMAGE_NAME $TAG)
     PR_BODY=$(printf "%s %s update" $DOCKER_IMAGE_NAME $TAG)
