@@ -3,9 +3,7 @@
 #set -e  # stops execution
 set -u  # undefined variable
 
-echo "OS info:"
-
-cat /etc/os-release
+CREATE_PR=${CREATE_PR:-false}
 
 echo "Set git globals"
 git config --global user.name "${GIT_USER_NAME}"
