@@ -50,6 +50,7 @@ process() {
     if ! git checkout -b $HEAD_GIT_BRANCH; then
       echo "Git checkout failed"
       exit 1
+    fi
   else
     HEAD_GIT_BRANCH=$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH
   fi
