@@ -32,15 +32,6 @@ process() {
 
   cd /tmp/git
 
-  # Switching branch if PR creation is requested
-  if [ "$CREATE_PR" = "true" ]; then
-    HEAD_GIT_BRANCH=$(printf "%s-v%s" $GIT_REPOSITORY_NAME $TAG)
-    echo "Switching git branch to $HEAD_GIT_BRANCH"
-    git checkout -b $HEAD_GIT_BRANCH
-  else
-    HEAD_GIT_BRANCH=$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH
-  fi
-  
   # Building the tag
   echo "Building tag"
   echo INPUT_TAG_NAME_SKIP=${INPUT_TAG_NAME_SKIP}
@@ -51,9 +42,21 @@ process() {
     echo "Tag building failed"
     exit 1
   fi
+
+  # Switching branch if PR creation is requested
+  if [ "$CREATE_PR" = "true" ]; then
+    HEAD_GIT_BRANCH=$(printf "%s-v%s" $GIT_REPOSITORY_NAME $TAG)
+    echo "Switching git branch to $HEAD_GIT_BRANCH"
+    if ! git checkout -b $HEAD_GIT_BRANCH; then
+      echo "Git checkout failed"
+      exit 1
+  else
+    HEAD_GIT_BRANCH=$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH
+  fi
+  
+  echo "Head git branch $HEAD_GIT_BRANCH"
   
   # Processing docker image names
-  echo "$DOCKER_IMAGE_NAME" | IFS=',' read -ra DOCKER_IMAGE_NAMES_ARRAY
   
   for DOCKER_IMAGE_NAME_ITEM in $(echo $DOCKER_IMAGE_NAME | tr "," "\n")
   do
@@ -97,7 +100,7 @@ process() {
     PR_TITLE=$(printf "%s %s" $GIT_REPOSITORY_NAME $TAG)
     PR_BODY=$(printf "%s %s update" $GIT_REPOSITORY_NAME $TAG)
     PR_URL="https://api.github.com/repos/${GIT_INFRASTRUCTURE_REPOSITORY_OWNER}/${GIT_INFRASTRUCTURE_REPOSITORY_NAME}/pulls"
-    PR_DATA='{"title":"${PR_TITLE}","body":"${PR_BODY}","head":"${HEAD_GIT_BRANCH}","base":"${GIT_INFRASTRUCTURE_REPOSITORY_BRANCH}"}'
+    PR_DATA="{""title"":""${PR_TITLE}"",""body"":""${PR_BODY}"",""head"":""${HEAD_GIT_BRANCH}"",""base"":""${GIT_INFRASTRUCTURE_REPOSITORY_BRANCH}""}"
     
     echo "PR title: $PR_TITLE"
     echo "PR body: $PR_BODY"
