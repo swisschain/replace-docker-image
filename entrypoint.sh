@@ -5,81 +5,96 @@ set -u  # fail on undefined variables
 
 CREATE_PR=${CREATE_PR:-false}
 
-echo "Set git globals"
+echo "Configuring git globals..."
 
 git config --global user.name "${GIT_USER_NAME}"
 git config --global user.email "${GIT_USER_EMAIL}"
 
-clone_commit_push() {
+process() {
   (
+  # Temp dir preparation
   if [ -d /tmp/git ]; then 
-    echo Temp Directory exist - remove
+    echo "Temp dir found. Removing"
     rm -r /tmp/git
-    echo Create New Temp Directory
+    echo "Creating new temp dir"
     mkdir /tmp/git
   else
-    echo Create Temp Directory
+    echo "Creating temp dir"
     mkdir /tmp/git
   fi
+  
+  # Cloning the repo
   echo "Cloning git repository (branch=$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH, owner=$GIT_INFRASTRUCTURE_REPOSITORY_OWNER, name=$GIT_INFRASTRUCTURE_REPOSITORY_NAME)"
-  if ! git clone --single-branch --branch "$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH" "https://x-access-token:$GIT_USER_API_TOKEN@github.com/$GIT_INFRASTRUCTURE_REPOSITORY_OWNER/$GIT_INFRASTRUCTURE_REPOSITORY_NAME.git" /tmp/git;then
+  if ! git clone --single-branch --branch "$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH" "https://x-access-token:$GIT_USER_API_TOKEN@github.com/$GIT_INFRASTRUCTURE_REPOSITORY_OWNER/$GIT_INFRASTRUCTURE_REPOSITORY_NAME.git" /tmp/git; then
     echo "Git clone failed"
     exit 1
   fi
-  echo "Go to git repository dir"
+
   cd /tmp/git
-  
-  if [ "$CREATE_PR" = "true" ];then
-    HEAD_GIT_BRANCH=$(printf "%s-v%s" $DOCKER_IMAGE_NAME $TAG)
-    echo "Switching branch to $HEAD_GIT_BRANCH"
+
+  # Switching branch if PR creation is requested
+  if [ "$CREATE_PR" = "true" ]; then
+    HEAD_GIT_BRANCH=$(printf "%s-v%s" $GIT_REPOSITORY_NAME $TAG)
+    echo "Switching git branch to $HEAD_GIT_BRANCH"
     git checkout -b $HEAD_GIT_BRANCH
   else
     HEAD_GIT_BRANCH=$GIT_INFRASTRUCTURE_REPOSITORY_BRANCH
   fi
-  #
-  echo "Set tag"
+  
+  # Building the tag
+  echo "Building tag"
   echo INPUT_TAG_NAME_SKIP=${INPUT_TAG_NAME_SKIP}
   TAG=$(echo ${GITHUB_REF} | sed -e "s/refs\/tags\/${INPUT_TAG_NAME_SKIP}//")
-  echo "Set docker image"
-  echo TAG=${TAG}
-  if echo ${TAG} | grep refs;then
-    echo "Get TAG failed"
+  
+  echo "Tag=${TAG}"
+  if echo ${TAG} | grep refs; then
+    echo "Tag building failed"
     exit 1
   fi
-  DOCKER_IMAGE=$(printf "%s/%s" $DOCKER_REPOSITORY_NAME $DOCKER_IMAGE_NAME)
-  echo DOCKER_IMAGE=$DOCKER_IMAGE
-  echo "Set docker image with slash"
-  DOCKER_IMAGE_SLASH=$(echo ${DOCKER_IMAGE} | sed 's#/#\\/#g')
-  echo DOCKER_IMAGE_SLASH=${DOCKER_IMAGE_SLASH}
-  #
-  echo "Start processing"
-  for YAML_FILE in $(grep -rn $DOCKER_IMAGE: ./ | awk -F: '{print $1}')
-  do
-    echo Processing $YAML_FILE
-    sed -i "s/${DOCKER_IMAGE_SLASH}:.*/${DOCKER_IMAGE_SLASH}:${TAG}/" ${YAML_FILE}
+  
+  # Processing docker image names
+  IFS=',' read -ra DOCKER_IMAGE_NAMES_ARRAY <<< "$DOCKER_IMAGE_NAME"
+  
+  for DOCKER_IMAGE_NAME_ITEM in "${DOCKER_IMAGE_NAMES_ARRAY[@]}"; do
+    DOCKER_IMAGE=$(printf "%s/%s" $DOCKER_REPOSITORY_NAME $DOCKER_IMAGE_NAME_ITEM)
+    echo DOCKER_IMAGE=$DOCKER_IMAGE
+
+    DOCKER_IMAGE_SLASH=$(echo ${DOCKER_IMAGE} | sed 's#/#\\/#g')
+    echo "Full docker image=${DOCKER_IMAGE_SLASH}"
+
+    for YAML_FILE in $(grep -rn $DOCKER_IMAGE: ./ | awk -F: '{print $1}')
+    do
+        echo "Processing $YAML_FILE"
+        sed -i "s/${DOCKER_IMAGE_SLASH}:.*/${DOCKER_IMAGE_SLASH}:${TAG}/" ${YAML_FILE}
+    done
   done
-  #
-  echo "Add changed file to git"
+  
+  # Adding changed files to git
+  echo "Add changed files to git"
   git add -A
-  echo "Show changes"
+  
+  echo "Changes:"
   git diff --cached
-  echo "Commit to git"
+  
+  echo "Committing to git"
   git commit -m "$GIT_REPOSITORY_NAME ${TAG}"
-  #echo Sleep 60
-  #sleep 60
-  echo "Push to git"
-  if ! git push --set-upstream origin $HEAD_GIT_BRANCH;then
+  
+  echo "Pushing to git"
+  if ! git push --set-upstream origin $HEAD_GIT_BRANCH; then
     echo "Git push failed"
     exit 1
   fi
   echo $? > /tmp/exit_status
-  echo "Changes log"
+  
+  echo "Git changes log:"
   git log -2
-  #
-  if [ "$CREATE_PR" = "true" ];then
-    echo "Creating PR..."
-    PR_TITLE=$(printf "%s %s" $DOCKER_IMAGE_NAME $TAG)
-    PR_BODY=$(printf "%s %s update" $DOCKER_IMAGE_NAME $TAG)
+  
+  # Creating GitHub PR
+  if [ "$CREATE_PR" = "true" ]; then
+    echo "Creating PR"
+    
+    PR_TITLE=$(printf "%s %s" $GIT_REPOSITORY_NAME $TAG)
+    PR_BODY=$(printf "%s %s update" $GIT_REPOSITORY_NAME $TAG)
     PR_URL="https://api.github.com/repos/${GIT_INFRASTRUCTURE_REPOSITORY_OWNER}/${GIT_INFRASTRUCTURE_REPOSITORY_NAME}/pulls"
     PR_DATA='{"title":"${PR_TITLE}","body":"${PR_BODY}","head":"${HEAD_GIT_BRANCH}","base":"${GIT_INFRASTRUCTURE_REPOSITORY_BRANCH}"}'
     
@@ -94,38 +109,21 @@ clone_commit_push() {
         -H "Authorization: Bearer $GIT_USER_API_TOKEN" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         $PR_URL \
-        -d $PR_DATA;then
+        -d $PR_DATA; then
       echo "PR creation failed"
       exit 1
     fi
   fi
-  ) > /tmp/clone_commit_push.log 2>&1
+  ) > /tmp/process.log 2>&1
 }
 
-if ! clone_commit_push;then
-  echo "Print Log F0"
-  cat /tmp/clone_commit_push.log
-  echo "Update-Not-Success"
+if ! process; then
+  echo "Failed to process. Log:"
+  cat /tmp/process.log
   exit 1
-fi
-
-exit_code=$(cat /tmp/exit_status)
-
-if [ "$exit_code" -eq 1 ]; then
-  echo "Print Log F1"
-  cat /tmp/clone_commit_push.log
-  echo "Update-Not-Success try again"
-  clone_commit_push
-  exit_code_2=$(cat /tmp/exit_status)
-  if [ "$exit_code_2" -eq 1 ]; then
-    echo "Print Log F2"
-    cat /tmp/clone_commit_push.log
-    echo "Update-Not-Success"
-    exit 1
-  fi
 else
-  echo "Print Log S1"
-  cat /tmp/clone_commit_push.log
-  echo "Success-Update"
-  exit 0
+  echo "Processing done. Log:"
+  cat /tmp/process.log
 fi
+
+exec "$@"
