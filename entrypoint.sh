@@ -101,7 +101,7 @@ process() {
     PR_TITLE=$(printf "%s %s" $GIT_REPOSITORY_NAME $TAG)
     PR_BODY=$(printf "%s %s update" $GIT_REPOSITORY_NAME $TAG)
     PR_URL="https://api.github.com/repos/${GIT_INFRASTRUCTURE_REPOSITORY_OWNER}/${GIT_INFRASTRUCTURE_REPOSITORY_NAME}/pulls"
-    PR_DATA="{""title"":""${PR_TITLE}"",""body"":""${PR_BODY}"",""head"":""${HEAD_GIT_BRANCH}"",""base"":""${GIT_INFRASTRUCTURE_REPOSITORY_BRANCH}""}"
+    PR_DATA="{\"title\":\"${PR_TITLE}\",\"body\":\"${PR_BODY}\",\"head\":\"${HEAD_GIT_BRANCH}\",\"base\":\"${GIT_INFRASTRUCTURE_REPOSITORY_BRANCH}\"}"
     
     echo "PR title: $PR_TITLE"
     echo "PR body: $PR_BODY"
