@@ -1,13 +1,15 @@
 #!/bin/sh -l
 
 #set -e  # stops execution
-set -u  # undefined variable
+set -u  # fail on undefined variables
 
 CREATE_PR=${CREATE_PR:-false}
 
 echo "Set git globals"
+
 git config --global user.name "${GIT_USER_NAME}"
 git config --global user.email "${GIT_USER_EMAIL}"
+
 clone_commit_push() {
   (
   if [ -d /tmp/git ]; then 
@@ -99,13 +101,16 @@ clone_commit_push() {
   fi
   ) > /tmp/clone_commit_push.log 2>&1
 }
+
 if ! clone_commit_push;then
   echo "Print Log F0"
   cat /tmp/clone_commit_push.log
   echo "Update-Not-Success"
   exit 1
 fi
+
 exit_code=$(cat /tmp/exit_status)
+
 if [ "$exit_code" -eq 1 ]; then
   echo "Print Log F1"
   cat /tmp/clone_commit_push.log
