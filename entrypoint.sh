@@ -53,9 +53,10 @@ process() {
   fi
   
   # Processing docker image names
-  echo "$DOCKER_IMAGE_NAME" | IFS=',' read -ra array
+  echo "$DOCKER_IMAGE_NAME" | IFS=',' read -ra DOCKER_IMAGE_NAMES_ARRAY
   
-  for DOCKER_IMAGE_NAME_ITEM in "${DOCKER_IMAGE_NAMES_ARRAY[@]}"; do
+  for DOCKER_IMAGE_NAME_ITEM in $(echo $DOCKER_IMAGE_NAME | tr "," "\n")
+  do
     DOCKER_IMAGE=$(printf "%s/%s" $DOCKER_REPOSITORY_NAME $DOCKER_IMAGE_NAME_ITEM)
     echo DOCKER_IMAGE=$DOCKER_IMAGE
 
