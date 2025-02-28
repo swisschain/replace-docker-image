@@ -108,16 +108,26 @@ process() {
     echo "PR URL: $PR_URL"
     echo "PR data: $PR_DATA"
     
-    if ! curl -L \
+    if ! PR_CREATION_RESPONSE=$(curl -L \
         -X POST \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer $GIT_USER_API_TOKEN" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        $PR_URL \
-        -d $PR_DATA; then
-      echo "PR creation failed"
+        --write-out '%{http_code}' \
+        --silent \
+        --output "/dev/null" \
+        -d "$PR_DATA" \
+        $PR_URL); then
+      echo "PR creation CURL execution failed"
       exit 1
     fi
+    
+    echo "PR creation http status code: $PR_CREATION_RESPONSE" 
+       
+    if [ "$PR_CREATION_RESPONSE" -ne 200 ]; then
+      echo "PR creation failed"
+      exit 1
+    fi    
   fi
   ) > /tmp/process.log 2>&1
 }
