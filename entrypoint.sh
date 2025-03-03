@@ -113,18 +113,21 @@ process() {
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer $GIT_USER_API_TOKEN" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        --write-out '%{http_code}' \
+        --write-out '\n%{http_code}' \
         --silent \
-        --output "/dev/null" \
         -d "$PR_DATA" \
         $PR_URL); then
       echo "PR creation CURL execution failed"
       exit 1
     fi
     
-    echo "PR creation http status code: $PR_CREATION_RESPONSE" 
+    PR_CREATION_RESPONSE_HTTP_STATUS=$(echo "$PR_CREATION_RESPONSE" | tail -n1)
+    PR_CREATION_RESPONSE_JSON=$(echo "$PR_CREATION_RESPONSE" | sed '$d')  # Remove last line (HTTP status)
+    
+    echo "PR creation http status code: $PR_CREATION_RESPONSE"
+    echo "PR creation response JSON: $PR_CREATION_RESPONSE_JSON"
        
-    if [ "$PR_CREATION_RESPONSE" -ne 200 ]; then
+    if [ "$PR_CREATION_RESPONSE_HTTP_STATUS" -ne 200 ]; then
       echo "PR creation failed"
       exit 1
     fi    
