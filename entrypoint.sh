@@ -124,11 +124,11 @@ process() {
     PR_CREATION_RESPONSE_HTTP_STATUS=$(echo "$PR_CREATION_RESPONSE" | tail -n1)
     PR_CREATION_RESPONSE_JSON=$(echo "$PR_CREATION_RESPONSE" | sed '$d')  # Remove last line (HTTP status)
     
-    echo "PR creation http status code: $PR_CREATION_RESPONSE"
-    echo "PR creation response JSON: $PR_CREATION_RESPONSE_JSON"
+    echo "PR creation http status code: $PR_CREATION_RESPONSE_HTTP_STATUS"
        
-    if [ "$PR_CREATION_RESPONSE_HTTP_STATUS" -ne 200 ]; then
+    if [ "$PR_CREATION_RESPONSE_HTTP_STATUS" -ne 201 ]; then
       echo "PR creation failed"
+      echo "PR creation response JSON: $PR_CREATION_RESPONSE_JSON"
       exit 1
     fi    
   fi
